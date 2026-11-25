@@ -1,0 +1,39 @@
+# Guardar en .github/workflows/bop-cadiz.yml
+name: Monitor BOP Cádiz
+
+on:
+  schedule:
+    # Lunes a viernes, 07:40 UTC (08:40 en invierno / 09:40 en verano, hora de Madrid)
+    - cron: '40 7 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # para guardar state.json (último boletín revisado)
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install --no-save nodemailer
+
+      - name: Revisar BOP
+        run: node bop-monitor.js
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          SEND_EMPTY: '1'   # pon '0' si solo quieres correo cuando haya anuncios
+
+      - name: Guardar estado
+        run: |
+          git config user.name "bop-monitor"
+          git config user.email "bop-monitor@users.noreply.github.com"
+          git add state.json
+          git diff --cached --quiet || git commit -m "BOP: último boletín revisado"
+          git push
