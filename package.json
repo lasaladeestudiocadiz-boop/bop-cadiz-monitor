@@ -1,0 +1,6 @@
+{
+  "name": "bop-cadiz-monitor",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" }
+}
